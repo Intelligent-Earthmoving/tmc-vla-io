@@ -2,10 +2,10 @@ import { WebViewer } from "@rerun-io/web-viewer";
 
 const rrd =
   new URLSearchParams(location.search).get("url") ||
-  "https://raw.githubusercontent.com/Intelligent-Earthmoving/tmc-vla-io/main/recordings/dna_structure.rrd";
+  "https://raw.githubusercontent.com/Intelligent-Earthmoving/tmc-vla-io/main/recordings/data.rrd";
 const rbl =
   new URLSearchParams(location.search).get("url") ||
-  "https://raw.githubusercontent.com/Intelligent-Earthmoving/tmc-vla-io/main/recordings/dna_structure.rbl";
+  "https://raw.githubusercontent.com/Intelligent-Earthmoving/tmc-vla-io/main/recordings/data.rbl";
 const parent = document.getElementById("demo");
 
 const viewer = new WebViewer();
