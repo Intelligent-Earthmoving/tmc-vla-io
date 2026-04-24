@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Terrain Map-Conditioned VLAs for Autonomous Earthmoving</title>
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+  />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+  <link rel="stylesheet" href="./style.css" type="text/css" />
+</head>
+
+<body>
+  <div class="doc-strip">
+    <span class="doc-strip-cell">
+      <span class="doc-strip-label">Doc.</span>PP-VLA-01
+    </span>
+    <span class="doc-strip-cell">
+      Project Page<span class="sep">/</span>Rev A
+    </span>
+    <span class="doc-strip-cell">
+      2026-04-24<span class="sep">·</span>Distribution A
+    </span>
+  </div>
+
+  <div class="agency-band" aria-label="Affiliated agencies">
+    <img src="/logos/usace.png" alt="U.S. Army Corps of Engineers" />
+    <img src="/logos/erdc.png" alt="Engineer Research &amp; Development Center" />
+    <img src="/logos/cerl.png" alt="Construction Engineering Research Laboratory" />
+  </div>
+
+  <header class="masthead">
+    <span class="masthead-tag">Preliminary report</span>
+
+    <h1 class="masthead-title">Terrain Map-Conditioned VLAs for Autonomous Earthmoving</h1>
+
+    <p class="masthead-authors">
+      Brian Blankenau<sup class="author-mark">†</sup>,
+      Arturo Saucedo<sup class="author-mark">†</sup>,
+      W. Jacob Wagner<sup class="author-mark">†</sup>,
+      Isaac Blankenau<sup class="author-mark">‡</sup>,
+      Dustin Nottage,
+      Ahmet Soylemezoglu
+    </p>
+    <p class="masthead-institution">
+      Construction Engineering Research Laboratory<span class="sep-dot"> · </span>Engineer Research &amp; Development Center<span class="sep-dot"> · </span>U.S. Army Corps of Engineers
+    </p>
+    <p class="masthead-notes">
+      <span class="mark">†</span>Equal contribution.&nbsp;&nbsp;<span class="mark">‡</span>Work performed at CERL; now at Rerun.
+    </p>
+
+    <nav class="masthead-links">
+      <!-- TODO: replace with real Paper / Code / Poster / Videos URLs -->
+      <a href="#" rel="noopener">
+        <i class="fa fa-file-pdf-o" aria-hidden="true"></i>Paper
+      </a>
+      <a href="#" rel="noopener">
+        <i class="fa fa-github" aria-hidden="true"></i>Code
+      </a>
+      <a href="#" rel="noopener">
+        <i class="fa fa-file-text-o" aria-hidden="true"></i>Poster
+      </a>
+      <a href="#" rel="noopener">
+        <i class="fa fa-play-circle-o" aria-hidden="true"></i>Videos
+      </a>
+    </nav>
+  </header>
+
+  <section class="section section--hero" id="recording">
+    <figure class="viewer-frame">
+      <div class="viewer-tag">
+        <span class="viewer-tag-dot" aria-hidden="true"></span>
+        <span>LIVE · rerun web viewer</span>
+      </div>
+      <div id="demo">
+        <script type="module" src="./src/main.ts"></script>
+      </div>
+      <figcaption>Fig. 1. REO-RCTL recording. Observations, state, and action channels on a shared clock.</figcaption>
+    </figure>
+
+    <div class="demo-info-wrapper">
+      <span class="demo-info-label">Selected</span>
+      <div id="demo-info" class="demo-info"></div>
+    </div>
+  </section>
+
+  <section class="section" id="abstract">
+    <span class="section-number">§ 01</span>
+    <h2 class="section-title">Abstract</h2>
+    <div class="section-body">
+      <p class="lead-question">
+        How do we adapt VLAs, pretrained on bimanual robotic manipulation tasks, for earthmoving operations on heavy equipment?
+      </p>
+      <p>
+        Vision–language–action models (VLAs) have demonstrated remarkable generalization in structured environments. Their efficacy in complex field environments, however, remains largely unexplored. Field robotics tasks like earthmoving present unique challenges: mobile manipulation of deformable terrain, widely varying environmental conditions, and high contact forces. This study investigates how the success of VLAs can be extended to autonomous earthmoving by utilizing terrain map-conditioned policies to achieve robust performance across diverse soil types.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="gap">
+    <span class="section-number">§ 02</span>
+    <h2 class="section-title">Why earthmoving is hard</h2>
+    <div class="section-body">
+      <p>
+        VLAs have succeeded in settings where the variation is semantic. Objects and instructions change, the physics does not. Earthmoving inverts this. Soil behavior shifts with moisture, compaction, and weather. Contact forces are high and nonlinear. The blade occludes the material it accumulates. Depth, the cue a camera-only policy leans on, is unreliable over loose, uniformly textured soil. Tasks unfold over a large work area and a long horizon, so no single camera frame carries the context.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="maps">
+    <span class="section-number">§ 03</span>
+    <h2 class="section-title">Elevation maps as conditioning</h2>
+    <div class="section-body">
+      <p>
+        The policy needs a representation of terrain state that survives those gaps. We feed it an egocentric top-down elevation map alongside the camera image. The map provides three things a camera and joint state alone cannot: a measure of blade soil accumulation, a heightmap representation of the environment, and dynamic updates throughout task runtime.
+      </p>
+      <p>
+        The map is initialized from an initial scan of the work site by the vehicle and is updated continuously as the vehicle operates. Blade motion through the terrain updates heights by swept-volume displacement. Soil failure physics erodes material to produce realistic piling and spoil. Near-vehicle height estimation closes the information gap under the blade, which is critical for policy learning.
+      </p>
+      <p>
+        Where the blade or a recent interaction occludes the camera, the map still carries state. The policy reasons about accumulated soil and distant terrain in the same representation.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="goals">
+    <span class="section-number">§ 04</span>
+    <h2 class="section-title">Difference maps as goals</h2>
+    <div class="section-body">
+      <p>
+                Pile-building is under-specified. We want a model that builds not just a pile but a specific structure, defined by location, shape, size, and cut. Goals are specified with a target elevation map that encodes desired additions and subtractions to soil height. The model takes the per-cell difference between the current map and the target as a second image input.
+      </p>
+      <p>
+        Difference maps also enable corrective data collection. Standard operations rarely generate corrective labels, and a self-supervised policy trained on end-state maps naturally exhibits out-of-distribution behavior at runtime. Prescribing a target difference map makes it possible to collect supplementary supervised and DAgger data that expand the distribution and correct those failures.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="data">
+    <span class="section-number">§ 05</span>
+    <h2 class="section-title">Data regimes</h2>
+    <div class="section-body">
+      <p>We collect data under three regimes, each addressing a different gap:</p>
+      <ul>
+        <li><strong>Self-supervised (SS).</strong> The end-state elevation map from an episode is retroactively used as that episode's goal. Minimally intrusive (standard operations produce the labels, and operators are not over-burdened). Naturally biased toward distributions the policy already knows, which yields out-of-distribution behavior at runtime.</li>
+        <li><strong>Supervised.</strong> A human operator teleoperates toward a prescribed goal map. Expands the distribution toward structures the self-supervised policy would never generate on its own.</li>
+        <li><strong>DAgger.</strong> A self-supervised policy drives while a human operator intervenes to correct. Targets the failure modes the policy exhibits at runtime.</li>
+      </ul>
+      <p>We evaluate three dataset compositions combining these regimes:</p>
+
+      <figure class="data-table">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Dataset</th>
+              <th scope="col">D4</th>
+              <th scope="col">D5</th>
+              <th scope="col">D6</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Self-supervised</th><td>•</td><td>•</td><td>•</td></tr>
+            <tr><th scope="row">Supervised</th><td></td><td>•</td><td></td></tr>
+            <tr><th scope="row">DAgger</th><td></td><td></td><td>•</td></tr>
+          </tbody>
+        </table>
+        <figcaption>Tab. 1. Dataset compositions.</figcaption>
+      </figure>
+
+      <p>
+        A single operator collected about 14 hours of data across 8 days, on three earthmoving tasks, under a wide range of weather and soil conditions: overcast, sun, rain, snow, wind, frozen, saturated, hard, dry. The full corpus is 584 episodes and roughly 13.3 hours. The task-specific dataset is 209 episodes.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="model">
+    <span class="section-number">§ 06</span>
+    <h2 class="section-title">Model</h2>
+    <div class="section-body">
+      <p>
+        The policy is <strong>SmolVLA</strong> with the SIGLIP image encoders frozen. Observations are nineteen vehicle states plus image inputs. The states are joint positions and velocities on the lift, pitch, and roll axes; track velocities; vehicle roll and pitch; body twist; and engine RPM. Actions are joint efforts, similar to open-loop velocity control. Inference runs at 10&nbsp;Hz, matched to the machine's low-frequency base controls. Vehicle dynamics are also slow.
+      </p>
+      <p>We evaluate three image-input configurations:</p>
+
+      <figure class="data-table">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Inputs</th>
+              <th scope="col">M1</th>
+              <th scope="col">M2</th>
+              <th scope="col">M3</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Front image</th><td>•</td><td></td><td>•</td></tr>
+            <tr><th scope="row">Map image</th><td></td><td>•</td><td>•</td></tr>
+          </tbody>
+        </table>
+        <figcaption>Tab. 2. Model input configurations.</figcaption>
+      </figure>
+
+      <p>
+        Future work will move to the π<sub>0.5</sub> policy family.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="platform">
+    <span class="section-number">§ 07</span>
+    <h2 class="section-title">Platform</h2>
+    <div class="section-body">
+      <p>
+        The platform is <strong>REO-RCTL</strong>: the Robotics for Engineer Operations Robotic Compact Track Loader. It is a CAT 299 D3 XE compact track loader fitted with read/write machine controls, ruggedized compute, RTK GNSS-INS, LiDAR, forward and stereo cameras, and string pots on the lift and tilt linkage. The mapping stack and the policy both run on the vehicle.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="infra">
+    <span class="section-number">§ 08</span>
+    <h2 class="section-title">System infrastructure</h2>
+    <div class="section-body">
+      <p>
+        The training and deployment stack is <strong>ROS&nbsp;2</strong> for the runtime, <strong>LeRobot</strong> for model infrastructure, and <strong>Rosetta</strong>, a ROS&nbsp;2 / LeRobot contract layer that streamlines data recording, training, and inference against a single schema. The same contract defines what is recorded, what is trained on, and what is commanded at deployment.
+      </p>
+
+      <p class="pipeline-flow">
+        Define contract <span class="arrow">→</span>
+        Record data <span class="arrow">→</span>
+        Convert datasets <span class="arrow">→</span>
+        Train policy <span class="arrow">→</span>
+        Deploy on robot <span class="arrow">→</span>
+        DAgger <span class="arrow">↺</span>
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="findings">
+    <span class="section-number">§ 09</span>
+    <h2 class="section-title">Early conclusions</h2>
+    <div class="section-body">
+      <ul>
+        <li><strong>Map conditioning helps.</strong> Elevation-map-conditioned policies outperform image-only policies.</li>
+        <li><strong>DAgger is data-efficient.</strong> Substituting about 25% of self-supervised data with DAgger examples reduces failures. This shows a path to train on large bodies of operator data with a small budget of expert interventions.</li>
+        <li><strong>Dataset size beats training steps.</strong> Training-step count has less impact on performance than dataset size in our regime.</li>
+        <li><strong>Sensitivities.</strong> Policies show noticeable sensitivity to engine RPM and blade yaw at inference.</li>
+      </ul>
+      <p>
+        These are preliminary findings from a small evaluation suite. The direction is suggestive.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="future">
+    <span class="section-number">§ 10</span>
+    <h2 class="section-title">Future work</h2>
+    <div class="section-body">
+      <span class="subsection-label">Data</span>
+      <ul>
+        <li>Collect additional in-cab operator, teleop, and DAgger data.</li>
+        <li>Increase the variety of goal earthmoving profiles in the dataset.</li>
+        <li>Add simulation data for pre-training (Algoryx, Vortex).</li>
+      </ul>
+
+      <span class="subsection-label">Policy architecture and training</span>
+      <ul>
+        <li>Feature dropout during training.</li>
+        <li>Migrate to the π-series base models.</li>
+        <li>Expand model history (KV caching).</li>
+        <li>RL or advantage conditioning.</li>
+        <li>Stage-aware reward modeling.</li>
+      </ul>
+
+      <span class="subsection-label">Long-horizon planning</span>
+      <ul>
+        <li>High-level diffusion stage planner for goal maps.</li>
+      </ul>
+
+      <span class="subsection-label">Model features</span>
+      <ul>
+        <li>Incorporate soil-property knowledge from online soil-property estimation.</li>
+        <li>Move to low-level position control and position-command action space.</li>
+        <li>Fix track-speed normalization.</li>
+      </ul>
+
+      <span class="subsection-label">Platform</span>
+      <ul>
+        <li>Move to more capable machines (D3 bulldozer).</li>
+        <li>Multi-task evaluations.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" id="references">
+    <span class="section-number">§ 11</span>
+    <h2 class="section-title">References</h2>
+    <div class="section-body">
+      <ul class="reference-list">
+        <li>
+          <span class="ref-tag">Rosetta</span>
+          <a href="https://github.com/iblnkn/rosetta" target="_blank" rel="noopener">github.com/iblnkn/rosetta</a>
+        </li>
+        <li>
+          <span class="ref-tag">SmolVLA</span>
+          <a href="https://huggingface.co/blog/smolvla" target="_blank" rel="noopener">huggingface.co/blog/smolvla</a>
+        </li>
+        <li>
+          <span class="ref-tag">EMCUPY</span>
+          <a href="https://github.com/leggedrobotics/elevation_mapping_cupy" target="_blank" rel="noopener">github.com/leggedrobotics/elevation_mapping_cupy</a>
+        </li>
+        <li>
+          <span class="ref-tag">Wagner · ISTVS</span>
+          <a href="https://arxiv.org/pdf/2507.22356" target="_blank" rel="noopener">arxiv.org/pdf/2507.22356</a>
+        </li>
+        <li>
+          <span class="ref-tag">LeRobot Folding</span>
+          <a href="https://huggingface.co/spaces/lerobot/robot-folding" target="_blank" rel="noopener">huggingface.co/spaces/lerobot/robot-folding</a>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" id="cite">
+    <span class="section-number">§ 12</span>
+    <h2 class="section-title">Cite</h2>
+    <div class="section-body">
+      <p class="bibtex-label">BibTeX</p>
+<pre>@misc{cerl2026vla,
+  title  = {Terrain Map-Conditioned VLAs for Autonomous Earthmoving:
+            Preliminary Report},
+  author = {Blankenau, Brian and Saucedo, Arturo and Wagner, W. Jacob and
+            Blankenau, Isaac and Nottage, Dustin and Soylemezoglu, Ahmet},
+  year   = {2026},
+  note   = {Construction Engineering Research Laboratory,
+            U.S. Army Corps of Engineers},
+}</pre>
+    </div>
+  </section>
+
+  <footer class="doc-footer">
+    <span>Construction Engineering Research Laboratory</span>
+    <span class="sep">·</span>
+    <span>2026</span>
+    <span class="sep">·</span>
+    <span>Viewer by Rerun</span>
+  </footer>
+</body>
+</html>
