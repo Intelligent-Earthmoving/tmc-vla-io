@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Recordings hosted via GitHub Releases, not git
+recordings/data.rbl
+recordings/data.rrd
