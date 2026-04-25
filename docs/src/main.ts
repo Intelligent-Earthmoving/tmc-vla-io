@@ -2,10 +2,10 @@ import { WebViewer } from "@rerun-io/web-viewer";
 
 const rrd =
   new URLSearchParams(location.search).get("url") ||
-  "https://github.com/Intelligent-Earthmoving/tmc-vla-io/releases/download/v0.1.0/data.rrd";
+  "https://pub-aa6685b94f564a1082bebfcc7f527c2f.r2.dev/data.rrd";
 const rbl =
   new URLSearchParams(location.search).get("url") ||
-  "https://github.com/Intelligent-Earthmoving/tmc-vla-io/releases/download/v0.1.0/data.rbl";
+  "https://pub-aa6685b94f564a1082bebfcc7f527c2f.r2.dev/data.rbl";
 const parent = document.getElementById("demo");
 
 const viewer = new WebViewer();
