@@ -59,16 +59,16 @@
 
     <nav class="masthead-links">
       <!-- TODO: replace with real Paper / Code / Poster / Videos URLs -->
-      <a href="#" rel="noopener">
-        <i class="fa fa-file-pdf-o" aria-hidden="true"></i>Paper
-      </a>
-      <a href="#" rel="noopener">
-        <i class="fa fa-github" aria-hidden="true"></i>Code
-      </a>
-      <a href="#" rel="noopener">
+      <!-- <a href="#" rel="noopener"> -->
+        <!-- <i class="fa fa-file-pdf-o" aria-hidden="true"></i>Paper -->
+      <!-- </a> -->
+      <!-- <a href="#" rel="noopener"> -->
+        <!-- <i class="fa fa-github" aria-hidden="true"></i>Code -->
+      <!-- </a> -->
+      <a href="poster.pdf" target="_blank" rel="noopener">
         <i class="fa fa-file-text-o" aria-hidden="true"></i>Poster
       </a>
-      <a href="#" rel="noopener">
+      <a href="#videos" rel="noopener">
         <i class="fa fa-play-circle-o" aria-hidden="true"></i>Videos
       </a>
     </nav>
@@ -91,7 +91,7 @@
       <div id="demo-info" class="demo-info"></div>
     </div>
 
-    <div class="video-grid">
+    <div class="video-grid" id="videos">
       <div class="video-card">
         <div class="video-wrapper">
           <iframe src="https://www.youtube.com/embed/rZa_ldUoF7M" title="Autonomous Earthmoving | an evaluation sample" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
@@ -112,10 +112,39 @@
     <h2 class="section-title">Abstract</h2>
     <div class="section-body">
       <p class="lead-question">
-        How do we adapt VLAs, pretrained on bimanual robotic manipulation tasks, for earthmoving operations on heavy equipment?
+        How do we begin building general-purpose autonomous earthmoving using existing VLA architectures?
       </p>
       <p>
-        Vision–language–action models (VLAs) have demonstrated remarkable generalization in structured environments. Their efficacy in complex field environments, however, remains largely unexplored. Field robotics tasks like earthmoving present unique challenges: mobile manipulation of deformable terrain, widely varying environmental conditions, and high contact forces. This study investigates how the success of VLAs can be extended to autonomous earthmoving by utilizing terrain map-conditioned policies to achieve robust performance across diverse soil types.
+        <b>Vision-Language-Action</b> (VLA) models have demonstrated strong generalization in structured manipulation
+        and navigation domains.
+        However, their application to large-scale <b>field robotics</b> tasks, such as autonomous earthmoving, remains limited.
+        Autonomous earthmoving presents unique challenges, including deformable terrain, long-horizon tasks,
+        limited visibility at the tool-terrain interface, and highly variable environmental conditions.
+      </p>
+
+      <p>
+        This work investigates terrain map-conditioned VLAs for <b>autonomous earthmoving</b>.
+        We augment conventional camera observations and vehicle state features with top-down egocentric elevation maps
+        that represent local terrain geometry and blade-induced soil displacement.
+        Maps are produced by combining LiDAR imaging with a light-weight physics engine, tracking the blade movement
+        through the terrain and updating heights via swept volume displacements and soil failure physics
+        (producing soil piling and spoil creation).
+        These maps are continuously updated during operation and provide spatial context unavailable to vision-only
+        policies such as estimated terrain height near the vehicle where key occluded interactions occur.
+        To extend our policy toward general <b>goal-conditioned earthmoving tasks</b>, we leverage cut/fill maps that
+        encode desired terrain modifications relative to the current environment.
+        To allow for easy data collection and enable self-supervised goal conditioning, we use a post processing
+        trick, where the episode’s final terrain map is treated as the goal during reprocessing.
+      </p>
+
+      <p>
+        We explored the effectiveness of elevation maps as model input through an ablation study.
+        Initial policies were trained using SmolVLA with training data collected on a robotic compact track
+        loader under diverse soil and weather conditions.
+        Preliminary results demonstrate that cut/fill map conditioning improves task performance relative to
+        image-only baselines, and that map only policies can achieve near parity with image based models.
+        These findings suggest that goal-prompted terrain-aware policies may be a key enabler for <b>general-purpose
+        earth moving</b>.
       </p>
     </div>
   </section>
@@ -125,8 +154,20 @@
     <h2 class="section-title">Why earthmoving is hard</h2>
     <div class="section-body">
       <p>
-        VLAs have succeeded in settings where the variation is semantic. Objects and instructions change, the physics does not. Earthmoving inverts this. Soil behavior shifts with moisture, compaction, and weather. Contact forces are high and nonlinear. The blade occludes the material it accumulates. Depth, the cue a camera-only policy leans on, is unreliable over loose, uniformly textured soil. Tasks unfold over a large work area and a long horizon, so no single camera frame carries the context.
+        <!-- TODO: Change this. It's like the most AI written thing I have ever read lmao -->
+        Soil behavior shifts with moisture, compaction, and temperature, while contact forces are high and nonlinear.
+        It can also be difficult to discern depth and task progress through a camera only approach, as the environment that is being
+        worked upon may be visually homogenous, and the context of the work being done is limited to the contents of a single
+        egocentric camera imageframe.
+        Additionally, the blade on earthmoving equipment outright occludes important information like accumulated soil and cut depth, making it
+        difficult for a policy to know if any soil is being moved at all.
+        Finally, earthmoving operations unfold over a large work area and a long time horizon, making it far easier for errors to compound
+        and derail the task at hand.
       </p>
+      <!-- <p>
+        Meanwhile, engineers typically request <i>specific</i> earthen structures or tasks, of particualr geometries and at particular locations.
+        Translating those requirements into ... (TODO: finish?)
+      </p> -->
     </div>
   </section>
 
@@ -135,73 +176,36 @@
     <h2 class="section-title">Elevation maps as conditioning</h2>
     <div class="section-body">
       <p>
-        The policy needs a representation of terrain state that survives those gaps. We feed it an egocentric top-down elevation map alongside the camera image. The map provides three things a camera and joint state alone cannot: a measure of blade soil accumulation, a heightmap representation of the environment, and dynamic updates throughout task runtime.
+        Luckily, through map images  we can track progress, estimate missing soil observations, and provide an interface that allows for
+        the parametrization of earthmoving tasks.
+        We feed the model an egocentric top-down elevation map alongside the camera image.
+        The map provides a measure of blade soil accumulation, a heightmap representation of the environment, and dynamic terrain
+        elevation updates throughout task runtime.
       </p>
       <p>
-        The map is initialized from an initial scan of the work site by the vehicle and is updated continuously as the vehicle operates. Blade motion through the terrain updates heights by swept-volume displacement. Soil failure physics erodes material to produce realistic piling and spoil. Near-vehicle height estimation closes the information gap under the blade, which is critical for policy learning.
-      </p>
-      <p>
-        Where the blade or a recent interaction occludes the camera, the map still carries state. The policy reasons about accumulated soil and distant terrain in the same representation.
-      </p>
-    </div>
-  </section>
-
-  <section class="section" id="goals">
-    <span class="section-number">§ 04</span>
-    <h2 class="section-title">Difference maps as goals</h2>
-    <div class="section-body">
-      <p>
-                Pile-building is under-specified. We want a model that builds not just a pile but a specific structure, defined by location, shape, size, and cut. Goals are specified with a target elevation map that encodes desired additions and subtractions to soil height. The model takes the per-cell difference between the current map and the target as a second image input.
-      </p>
-      <p>
-        Difference maps also enable corrective data collection. Standard operations rarely generate corrective labels, and a self-supervised policy trained on end-state maps naturally exhibits out-of-distribution behavior at runtime. Prescribing a target difference map makes it possible to collect supplementary supervised and DAgger data that expand the distribution and correct those failures.
-      </p>
-    </div>
-  </section>
-
-  <section class="section" id="data">
-    <span class="section-number">§ 05</span>
-    <h2 class="section-title">Data regimes</h2>
-    <div class="section-body">
-      <p>We collect data under three regimes, each addressing a different gap:</p>
-      <ul>
-        <li><strong>Self-supervised (SS).</strong> The end-state elevation map from an episode is retroactively used as that episode's goal. Minimally intrusive (standard operations produce the labels, and operators are not over-burdened). Naturally biased toward distributions the policy already knows, which yields out-of-distribution behavior at runtime.</li>
-        <li><strong>Supervised.</strong> A human operator teleoperates toward a prescribed goal map. Expands the distribution toward structures the self-supervised policy would never generate on its own.</li>
-        <li><strong>DAgger.</strong> A self-supervised policy drives while a human operator intervenes to correct. Targets the failure modes the policy exhibits at runtime.</li>
-      </ul>
-      <p>We evaluate three dataset compositions combining these regimes:</p>
-
-      <figure class="data-table">
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">Dataset</th>
-              <th scope="col">D4</th>
-              <th scope="col">D5</th>
-              <th scope="col">D6</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><th scope="row">Self-supervised</th><td>•</td><td>•</td><td>•</td></tr>
-            <tr><th scope="row">Supervised</th><td></td><td>•</td><td></td></tr>
-            <tr><th scope="row">DAgger</th><td></td><td></td><td>•</td></tr>
-          </tbody>
-        </table>
-        <figcaption>Tab. 1. Dataset compositions.</figcaption>
-      </figure>
-
-      <p>
-        A single operator collected about 14 hours of data across 8 days, on three earthmoving tasks, under a wide range of weather and soil conditions: overcast, sun, rain, snow, wind, frozen, saturated, hard, dry. The full corpus is 584 episodes and roughly 13.3 hours. The task-specific dataset is 209 episodes.
+        The map is initialized from a scan of the work site by the vehicle and is updated continuously as the vehicle operates.
+        The blade-occluded portion of the map is updated in real time with simplified soil interaction physics.
+        This same physics model then erodes material to produce realistic piling and spoil on the map.
+        <!-- The modeling of this occluded portion of the map is critical for policy learning, as it provides policies with real-time updates on blade accumulated soil. -->
       </p>
     </div>
   </section>
 
   <section class="section" id="model">
-    <span class="section-number">§ 06</span>
+    <span class="section-number">§ 04</span>
     <h2 class="section-title">Model</h2>
     <div class="section-body">
       <p>
-        The policy is <strong>SmolVLA</strong> with the SIGLIP image encoders frozen. Observations are nineteen vehicle states plus image inputs. The states are joint positions and velocities on the lift, pitch, and roll axes; track velocities; vehicle roll and pitch; body twist; and engine RPM. Actions are joint efforts, similar to open-loop velocity control. Inference runs at 10&nbsp;Hz, matched to the machine's low-frequency base controls. Vehicle dynamics are also slow.
+        The policy is <strong>SmolVLA</strong> with the SIGLIP image encoders frozen.
+        Observations are nineteen vehicle states plus image inputs.
+        The states are joint positions and velocities on the lift, pitch, and roll axes;
+        track velocities;
+        vehicle roll and pitch;
+        body twist;
+        and engine RPM.
+        Actions are joint efforts, similar to open-loop velocity control.
+        Inference runs at 10&nbsp;Hz, matched to the machine's low-frequency base controls.
+        Vehicle dynamics are also slow.
       </p>
       <p>We evaluate three image-input configurations:</p>
 
@@ -220,8 +224,68 @@
             <tr><th scope="row">Map image</th><td></td><td>•</td><td>•</td></tr>
           </tbody>
         </table>
-        <figcaption>Tab. 2. Model input configurations.</figcaption>
+        <figcaption>Tab. 1. Model input configurations.</figcaption>
       </figure>
+    </div>
+  </section>
+
+  <section class="section" id="goals">
+    <span class="section-number">§ 04</span>
+    <h2 class="section-title">Cut/Fill maps as goals</h2>
+    <div class="section-body">
+      <p>
+        Pile-building is under-specified.
+        We want a model that builds not just a pile but a specific structure, defined by location, shape, size, and cut.
+        Goals are specified with a target elevation map that encodes desired additions and subtractions to soil height.
+        The model takes the per-cell difference between the current map and the target as a second image input.
+        These maps also enable better data collection, as we can show an operator cut/fill maps, align on a specific strategy,
+        and record their actions.
+
+      </p>
+      <p>
+        Cut and fill maps also enable <i>corrective</i> data collection.
+        As the self-supervised policy trained on end-state maps naturally exhibits out-of-distribution behavior at runtime,
+        we can use the cut/fill map to allow for Dataset Aggregation (DAgger) by showing a human operator the current
+        map states and correct those failures live.
+        These episodes are then fed back into the dataset for the next policy.
+        <!-- TODO: OKAY LAST SENTENCE -->
+      </p>
+      <p>
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="data">
+    <span class="section-number">§ 06</span>
+    <h2 class="section-title">Cut/Fill Map</h2>
+    <div class="section-body">
+      <p>
+        Thus, we train a second set of models with an additional image source: a cut/fill map.
+      </p>
+          Cut/Fill maps can be generated at train time with a pure <strong>self-supervised</strong> approach.
+          The end-state elevation map from an episode is retroactively used as that episode's goal.
+          This approach has the benefit of being minimally intrusive
+          (standard operations produce the labels, and operators are not over-burdened).
+      </p>
+
+      <p>Again, we evaluate three image-input configurations:</p>
+      <figure class="data-table">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Dataset</th>
+              <th scope="col">M4</th>
+              <th scope="col">M5</th>
+              <th scope="col">M6</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Front image</th><td>•</td><td></td><td>•</td></tr>
+            <tr><th scope="row">Map image</th><td></td><td>•</td><td>•</td></tr>
+            <tr><th scope="row">Cut/Fill image</th><td>•</td><td>•</td><td>•</td></tr>
+          </tbody>
+        </table>
+        <figcaption>Tab. 2. Cut/Fill Model input configurations.</figcaption>
 
       <p>
         Future work will move to the π<sub>0.5</sub> policy family.
@@ -231,20 +295,42 @@
 
   <section class="section" id="platform">
     <span class="section-number">§ 07</span>
+    <h2 class="section-title">Dataset</h2>
+    <div class="section-body">
+      </figure>
+      <p>
+        A single operator collected a bit over 13 hours of data across 8 days, on three earthmoving tasks,
+        under a wide range of weather and soil conditions:
+        overcast, sun, rain, snow, wind, frozen, saturated, hard, dry.
+        The full corpus is 584 episodes and roughly 13.3 hours.
+        The task-specific dataset ('build a pile) is 209 episodes.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="platform">
+    <span class="section-number">§ 08</span>
     <h2 class="section-title">Platform</h2>
     <div class="section-body">
       <p>
-        The platform is <strong>REO-RCTL</strong>: the Robotics for Engineer Operations Robotic Compact Track Loader. It is a CAT 299 D3 XE compact track loader fitted with read/write machine controls, ruggedized compute, RTK GNSS-INS, LiDAR, forward and stereo cameras, and string pots on the lift and tilt linkage. The mapping stack and the policy both run on the vehicle.
+        The platform is <strong>REO-RCTL</strong>:
+        the Robotics for Engineer Operations Robotic Compact Track Loader.
+        It is a CAT 299 D3 XE compact track loader fitted with read/write machine controls, ruggedized compute,
+        RTK GNSS-INS, LiDAR, forward and stereo cameras, and string pots on the lift and tilt linkage.
+        The mapping stack and the policy both run on the vehicle.
       </p>
     </div>
   </section>
 
   <section class="section" id="infra">
-    <span class="section-number">§ 08</span>
+    <span class="section-number">§ 09</span>
     <h2 class="section-title">System infrastructure</h2>
     <div class="section-body">
       <p>
-        The training and deployment stack is <strong>ROS&nbsp;2</strong> for the runtime, <strong>LeRobot</strong> for model infrastructure, and <strong>Rosetta</strong>, a ROS&nbsp;2 / LeRobot contract layer that streamlines data recording, training, and inference against a single schema. The same contract defines what is recorded, what is trained on, and what is commanded at deployment.
+        The training and deployment stack is <strong>ROS&nbsp;2</strong> for the runtime,
+        <strong>LeRobot</strong> for model infrastructure, and <strong>Rosetta</strong>,
+        a ROS&nbsp;2 / LeRobot contract layer that streamlines data recording, training, and inference against a single schema.
+        The same contract defines what is recorded, what is trained on, and what is commanded at deployment.
       </p>
 
       <p class="pipeline-flow">
@@ -259,14 +345,27 @@
   </section>
 
   <section class="section" id="findings">
-    <span class="section-number">§ 09</span>
+    <span class="section-number">§ 10</span>
     <h2 class="section-title">Early conclusions</h2>
     <div class="section-body">
       <ul>
-        <li><strong>Map conditioning helps.</strong> Elevation-map-conditioned policies outperform image-only policies.</li>
-        <li><strong>DAgger is data-efficient.</strong> Substituting about 25% of self-supervised data with DAgger examples reduces failures. This shows a path to train on large bodies of operator data with a small budget of expert interventions.</li>
-        <li><strong>Dataset size beats training steps.</strong> Training-step count has less impact on performance than dataset size in our regime.</li>
-        <li><strong>Sensitivities.</strong> Policies show noticeable sensitivity to engine RPM and blade yaw at inference.</li>
+        <li>
+          <strong>Map conditioning helps.</strong>
+          Elevation-map-conditioned policies outperform image-only policies.
+        </li>
+        <li>
+          <strong>DAgger is data-efficient.</strong>
+          Substituting about 25% of self-supervised data with DAgger examples reduces failures.
+          This shows a path to train on large bodies of operator data with a small budget of expert interventions.
+        </li>
+        <li>
+          <strong>Dataset size beats training steps.</strong>
+          Training-step count has less impact on performance than dataset size in our regime.
+        </li>
+        <li>
+          <strong>Sensitivities.</strong>
+          Policies show noticeable sensitivity to engine RPM and blade yaw at inference.
+        </li>
       </ul>
       <p>
         These are preliminary findings from a small evaluation suite. The direction is suggestive.
@@ -275,7 +374,7 @@
   </section>
 
   <section class="section" id="future">
-    <span class="section-number">§ 10</span>
+    <span class="section-number">§ 11</span>
     <h2 class="section-title">Future work</h2>
     <div class="section-body">
       <span class="subsection-label">Data</span>
@@ -315,7 +414,7 @@
   </section>
 
   <section class="section" id="references">
-    <span class="section-number">§ 11</span>
+    <span class="section-number">§ 12</span>
     <h2 class="section-title">References</h2>
     <div class="section-body">
       <ul class="reference-list">
@@ -344,7 +443,7 @@
   </section>
 
   <section class="section" id="cite">
-    <span class="section-number">§ 12</span>
+    <span class="section-number">§ 13</span>
     <h2 class="section-title">Cite</h2>
     <div class="section-body">
       <p class="bibtex-label">BibTeX</p>
