@@ -65,7 +65,7 @@
       <!-- <a href="#" rel="noopener"> -->
         <!-- <i class="fa fa-github" aria-hidden="true"></i>Code -->
       <!-- </a> -->
-      <a href="poster.pdf" target="_blank" rel="noopener">
+      <a href="/poster.pdf" target="_blank" rel="noopener">
         <i class="fa fa-file-text-o" aria-hidden="true"></i>Poster
       </a>
       <a href="#videos" rel="noopener">
@@ -255,12 +255,12 @@
     </div>
   </section>
 
-  <section class="section" id="data">
+  <section class="section" id="model-ii">
     <span class="section-number">§ 06</span>
-    <h2 class="section-title">Cut/Fill Map</h2>
+    <h2 class="section-title">Model II</h2>
     <div class="section-body">
       <p>
-        Thus, we train a second set of models with an additional image source: a cut/fill map.
+        So, we train a second set of models with an additional image source: a cut/fill map.
       </p>
           Cut/Fill maps can be generated at train time with a pure <strong>self-supervised</strong> approach.
           The end-state elevation map from an episode is retroactively used as that episode's goal.
@@ -293,7 +293,7 @@
     </div>
   </section>
 
-  <section class="section" id="platform">
+  <section class="section" id="dataset">
     <span class="section-number">§ 07</span>
     <h2 class="section-title">Dataset</h2>
     <div class="section-body">
@@ -305,7 +305,62 @@
         The full corpus is 584 episodes and roughly 13.3 hours.
         The task-specific dataset ('build a pile) is 209 episodes.
       </p>
-    </div>
+
+      <figure class="data-table">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Observation</th>
+              <th scope="col">Dim</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Front Image</th><td>[3x256x256]</td></tr>
+            <tr><th scope="row">Elevation Map</th><td>[3x256x256]</td></tr>
+            <tr><th scope="row">Cut/Fill Map*</th><td>[3x256x256]</td></tr>
+            <tr><th scope="row">Joint States</th><td>[1x10]</td></tr>
+            <tr><th scope="row">Odom</th><td>[1x6]</td></tr>
+            <tr><th scope="row">IMU</th><td>[1x2]</td></tr>
+            <tr><th scope="row">RPM</th><td>[1x1]</td></tr>
+          </tbody>
+        </table>
+        <figcaption>Tab. 3. Recorded Observations. <i>*Cut/Fill map can be generated during data post processing.</i></figcaption>
+
+
+      <figure class="data-table">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Joint State</th>
+              <th scope="col">Dim</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">tracks.rotational.position</th></tr>
+            <tr><th scope="row">tracks.rotational.velocity</th></tr>
+            <tr><th scope="row">tracks.linear.position</th></tr>
+            <tr><th scope="row">tracks.linear.velocity</th></tr>
+            <tr><th scope="row">virtual_lift_arm.position</th></tr>
+            <tr><th scope="row">virtual_lift_arm.velocity</th></tr>
+            <tr><th scope="row">blade_pitch.position</th></tr>
+            <tr><th scope="row">blade_pitch.velocity</th></tr>
+            <tr><th scope="row">blade_roll.position</th></tr>
+            <tr><th scope="row">blade_roll.velocity</th></tr>
+            <tr><th scope="row">twist.x</th></tr>
+            <tr><th scope="row">twist.x</th></tr>
+            <tr><th scope="row">twist.y</th></tr>
+            <tr><th scope="row">twist.y</th></tr>
+            <tr><th scope="row">twist.z</th></tr>
+            <tr><th scope="row">twist.z</th></tr>
+            <tr><th scope="row">vehicle_pitch</th></tr>
+            <tr><th scope="row">vehicle_roll</th></tr>
+            <tr><th scope="row">RPM</th></tr>
+          </tbody>
+        </table>
+        <figcaption>Tab. 4. Joint States List. <i>*Cut/Fill map can be generated during data post processing.</i></figcaption>
+
+
+      </div>
   </section>
 
   <section class="section" id="platform">
@@ -313,10 +368,10 @@
     <h2 class="section-title">Platform</h2>
     <div class="section-body">
       <p>
-        The platform is <strong>REO-RCTL</strong>:
+        The platform is the <strong>REO-RCTL</strong>:
         the Robotics for Engineer Operations Robotic Compact Track Loader.
         It is a CAT 299 D3 XE compact track loader fitted with read/write machine controls, ruggedized compute,
-        RTK GNSS-INS, LiDAR, forward and stereo cameras, and string pots on the lift and tilt linkage.
+        RTK GNSS-INS, LiDAR, forward and rearward stereo cameras, and string pots on the blade pitch, yaw, roll, and the lift arm.
         The mapping stack and the policy both run on the vehicle.
       </p>
     </div>
@@ -350,21 +405,23 @@
     <div class="section-body">
       <ul>
         <li>
-          <strong>Map conditioning helps.</strong>
-          Elevation-map-conditioned policies outperform image-only policies.
+          <strong>Cut/FIll Map conditioning helps.</strong>
+          Addition of Cut/Fill map with self-supervision significantly improves policy performance.
+          Near parity between policies trained on map images alone (M5) and map and camera images (M6).
+          Reduces key failure modes: vehicle run-away, re-starting pile creation, out-of-slot cuts.
+          Supplies a mechanism to specify location information for desired operations.
         </li>
         <li>
-          <strong>DAgger is data-efficient.</strong>
-          Substituting about 25% of self-supervised data with DAgger examples reduces failures.
-          This shows a path to train on large bodies of operator data with a small budget of expert interventions.
+          <strong>Just drop-in maps.</strong>
+          Frozen SIGLIP image encoders can be used with map images, though fine tuning may be preferred
         </li>
         <li>
-          <strong>Dataset size beats training steps.</strong>
-          Training-step count has less impact on performance than dataset size in our regime.
-        </li>
-        <li>
-          <strong>Sensitivities.</strong>
+          <strong>Limitations of imitation.</strong>
           Policies show noticeable sensitivity to engine RPM and blade yaw at inference.
+        </li>
+        <li>
+          <strong>Mix engineering with data.</strong>
+          Addition of anti-stall controller improves task execution and eliminates a key failure mode
         </li>
       </ul>
       <p>
@@ -386,7 +443,7 @@
 
       <span class="subsection-label">Policy architecture and training</span>
       <ul>
-        <li>Feature dropout during training.</li>
+        <!-- <li>Feature dropout during training.</li> -->
         <li>Migrate to the π-series base models.</li>
         <li>Expand model history (KV caching).</li>
         <li>RL or advantage conditioning.</li>
@@ -401,8 +458,8 @@
       <span class="subsection-label">Model features</span>
       <ul>
         <li>Incorporate soil-property knowledge from online soil-property estimation.</li>
-        <li>Move to low-level position control and position-command action space.</li>
-        <li>Fix track-speed normalization.</li>
+        <li>Include cut-depth and loose soil depth.</li>
+        <!-- <li>Fix track-speed normalization.</li> -->
       </ul>
 
       <span class="subsection-label">Platform</span>
@@ -460,7 +517,7 @@
   </section>
 
   <footer class="doc-footer">
-    <span>Construction Engineering Research Laboratory</span>
+    <span>Construction Engineering Research Laboratory,</span>
     <span class="sep">·</span>
     <span>2026</span>
     <span class="sep">·</span>
