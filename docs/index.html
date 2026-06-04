@@ -286,7 +286,7 @@
           </tbody>
         </table>
         <figcaption>Tab. 2. Cut/Fill Model input configurations.</figcaption>
-
+      </figure>
       <p>
         Future work will move to the π<sub>0.5</sub> policy family.
       </p>
@@ -315,51 +315,39 @@
             </tr>
           </thead>
           <tbody>
-            <tr><th scope="row">Front Image</th><td>[3x256x256]</td></tr>
-            <tr><th scope="row">Elevation Map</th><td>[3x256x256]</td></tr>
-            <tr><th scope="row">Cut/Fill Map*</th><td>[3x256x256]</td></tr>
-            <tr><th scope="row">Joint States</th><td>[1x10]</td></tr>
-            <tr><th scope="row">Odom</th><td>[1x6]</td></tr>
-            <tr><th scope="row">IMU</th><td>[1x2]</td></tr>
+            <tr><th scope="row">Front Image</th><td>[256x256x3]</td></tr>
+            <tr><th scope="row">Elevation Map</th><td>[256x256x3]</td></tr>
+            <tr><th scope="row">Cut/Fill Map*</th><td>[256x256x3]</td></tr>
+            <tr><th scope="row">Joint States</th><td>[5x2]</td></tr>
+            <tr><th scope="row">Odom</th><td>[3x2]</td></tr>
+            <tr><th scope="row">IMU</th><td>[2x1]</td></tr>
             <tr><th scope="row">RPM</th><td>[1x1]</td></tr>
           </tbody>
         </table>
         <figcaption>Tab. 3. Recorded Observations. <i>*Cut/Fill map can be generated during data post processing.</i></figcaption>
-
-
+      </figure>
+      
+      <br>
+      The joint states in more detail:
       <figure class="data-table">
         <table>
           <thead>
             <tr>
               <th scope="col">Joint State</th>
-              <th scope="col">Dim</th>
+              <th scope="col">Position</th>
+              <th scope="col">Velocity</th>
             </tr>
           </thead>
           <tbody>
-            <tr><th scope="row">tracks.rotational.position</th></tr>
-            <tr><th scope="row">tracks.rotational.velocity</th></tr>
-            <tr><th scope="row">tracks.linear.position</th></tr>
-            <tr><th scope="row">tracks.linear.velocity</th></tr>
-            <tr><th scope="row">virtual_lift_arm.position</th></tr>
-            <tr><th scope="row">virtual_lift_arm.velocity</th></tr>
-            <tr><th scope="row">blade_pitch.position</th></tr>
-            <tr><th scope="row">blade_pitch.velocity</th></tr>
-            <tr><th scope="row">blade_roll.position</th></tr>
-            <tr><th scope="row">blade_roll.velocity</th></tr>
-            <tr><th scope="row">twist.x</th></tr>
-            <tr><th scope="row">twist.x</th></tr>
-            <tr><th scope="row">twist.y</th></tr>
-            <tr><th scope="row">twist.y</th></tr>
-            <tr><th scope="row">twist.z</th></tr>
-            <tr><th scope="row">twist.z</th></tr>
-            <tr><th scope="row">vehicle_pitch</th></tr>
-            <tr><th scope="row">vehicle_roll</th></tr>
-            <tr><th scope="row">RPM</th></tr>
+            <tr><th scope="row">tracks rotational</th><td>•</td><td>•</td></tr>
+            <tr><th scope="row">tracks linear</th><td>•</td><td>•</td></tr>
+            <tr><th scope="row">virtual lift arm</th><td>•</td><td>•</td></tr>
+            <tr><th scope="row">blade pitch</th><td>•</td><td>•</td></tr>
+            <tr><th scope="row">blade roll</th><td>•</td><td>•</td></tr>
           </tbody>
         </table>
-        <figcaption>Tab. 4. Joint States List. <i>*Cut/Fill map can be generated during data post processing.</i></figcaption>
-
-
+        <figcaption>Tab. 4. Joint States in more detail.</figcaption>
+      </figure>
       </div>
   </section>
 
