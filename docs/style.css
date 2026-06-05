@@ -568,6 +568,22 @@ img, video { display: block; max-width: 100%; height: auto; }
   50%      { opacity: 0.45; }
 }
 
+/* Shown only on small screens, where the viewer is hidden (see media query). */
+.viewer-fallback {
+  display: none;
+  padding: 1.5rem 1.25rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--viewer-bg);
+}
+.viewer-fallback p {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--fg-muted);
+}
+
 .demo-info-wrapper {
   display: flex;
   gap: 0.75rem;
@@ -689,7 +705,12 @@ pre {
 @media (max-width: 640px) {
   body { font-size: 1rem; }
   .masthead-links { gap: 1.25rem; }
-  #demo canvas { height: 440px !important; }
-  .viewer-tag { font-size: 0.625rem; padding: 0.25rem 0.5rem; }
+  /* The Rerun viewer performs poorly on phones; hide it and the demo-info box,
+     and show the fallback message instead (the viewer is also not started in
+     main.ts on small screens). */
+  .viewer-frame #demo,
+  .viewer-tag,
+  .demo-info-wrapper { display: none; }
+  .viewer-fallback { display: block; }
   .video-grid { grid-template-columns: 1fr; }
 }
